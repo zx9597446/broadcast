@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
+	"net/url"
 
 	"github.com/codegangsta/martini"
 	"github.com/zx9597446/wssf"
@@ -41,13 +43,22 @@ func NewHandler() *MyConnectionHandler {
 	return &MyConnectionHandler{}
 }
 
-func broadcast(params martini.Params) (int, string) {
-	msg := params["msg"]
-	if msg != "" {
-		wssf.BroadcastMsg(wssf.TextMessage, []byte(msg))
-		return 200, "OK"
+func rebuild(values url.Values) map[string]string {
+	m := make(map[string]string, 0)
+	for k, v := range values {
+		m[k] = v[0]
 	}
-	return 400, "bad request"
+	return m
+}
+
+func broadcast(w http.ResponseWriter, r *http.Request) string {
+	r.ParseForm()
+	m := rebuild(r.Form)
+	j, err := json.Marshal(m)
+	if err != nil {
+		log.Panicln(err)
+	}
+	return string(j)
 }
 
 func main() {
