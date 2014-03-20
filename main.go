@@ -11,7 +11,10 @@ import (
 )
 
 const (
-	defaultPort = ":8080"
+	defaultHttpPort  = ":8887"
+	defaultWsPort    = ":8888"
+	defaultWsRoute   = "/ws"
+	defaultHttpRoute = "/bd"
 )
 
 type MyConnectionHandler struct {
@@ -58,12 +61,25 @@ func broadcast(w http.ResponseWriter, r *http.Request) string {
 	if err != nil {
 		log.Panicln(err)
 	}
-	return string(j)
+	wssf.BroadcastMsg(wssf.TextMessage, j)
+	log.Printf("broadcasting message: [%s]\n", string(j))
+	return "OK"
+}
+
+func serveHTTP() {
+	m := martini.Classic()
+	m.Get(defaultHttpRoute, broadcast)
+	log.Printf("serving http %s on port %s\n", defaultHttpRoute, defaultHttpPort)
+	log.Fatal(http.ListenAndServe(defaultHttpPort, m))
+}
+
+func serveWebsocket() {
+	wssf.ServeWS(defaultWsRoute, "GET", "", NewHandler())
+	log.Printf("serving websocket %s on port %s\n", defaultWsRoute, defaultWsPort)
+	log.Fatal(http.ListenAndServe(defaultWsPort, nil))
 }
 
 func main() {
-	wssf.ServeWS("/ws", "GET", "", NewHandler())
-	m := martini.Classic()
-	m.Get("/broadcast", broadcast)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	go serveHTTP()
+	serveWebsocket()
 }
