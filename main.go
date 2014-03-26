@@ -14,7 +14,7 @@ import (
 
 const (
 	defaultHttpPort  = ":8887"
-	defaultWsPort    = ":8888"
+	defaultWsPort    = ":9503"
 	defaultWsRoute   = "/ws"
 	defaultHttpRoute = "/bd"
 	defaultViewRoute = "/view"
